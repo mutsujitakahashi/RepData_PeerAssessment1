@@ -49,20 +49,44 @@ sum(is.na(act$steps))
 mean(is.na(act$steps))
 ```
 
-```{r imputing}
-dayAve <- act %>% group_by(date) %>% summarize(ave=mean(steps, na.rm=T ))
-# if steps are NA then mean(steps, na.rm=T) returns nan, fill it with 0
-x <- dayAve$ave %>% as.numeric %>% is.nan()
-dayAve[x,2] <- 0.0
+I chose a very simple imputing methods of abandoning NA's.
+The reason described below:
 
-acti <- tibble(act)  # duplicate  
-for (i in 1:nrow(acti)) {
-    if (is.na(acti[i,"steps"])) {
-        idx <- match(acti[i,"date"], dayAve$date)
-        acti[i,"steps"] <- dayAve[idx, "ave"]
-    }
-}
-dayStepsi <- acti %>% group_by(date) %>% summarize(steps=sum(steps, na.rm=T ))
+In this data, all NA's are all throughout the day. In other word a bunch of NA's are same date and there are no other data of the date.
+
+```{r searchNA}
+act %>% filter(is.na(steps)) %>% nrow
+act %>% filter(is.na(steps)) %>% select(date) %>% unique()
+```
+
+there are 8 days which sums up to 2304 NA's and 
+
+```{r}
+288*8
+```
+
+As number of intervals of a day is (60/5) * 24 = `r (60/5) * 24`, they are all same date.
+
+They are converted to 0 through
+ 
+```{r daySteps}
+daySteps <- act %>% group_by(date) %>% summarize(steps=sum(steps, na.rm=T ))
+daySteps[1:10,]
+```
+
+Because all NA day contains no information and if we make NA as 0 it just increases number of zeroes.
+
+As number of NA days are not very much
+
+```{r numberofNA}
+daySteps %>% summarize(mean(steps==0) ) 
+```
+I thought just excluding those NA days is a better idea.
+
+=========================================================
+```{r imputing}
+acti <- act %>% filter(!is.na(steps))  # just abandon NA
+dayStepsi <- acti %>% group_by(date) %>% summarize(steps=sum(steps))
 hist(dayStepsi$steps, breaks=12, main="Imputed Daily Steps", xlab="Steps")
 
 ```
@@ -75,9 +99,8 @@ sprintf("%6.0f", median(dayStepsi$steps))
 ```
 respectively.
 
-There seems to be no difference before and after imputing.   
-The effect of imputing is not large.
-See notes below for details.
+Mean and median shifts to higher significantly after imputing.   
+The effect of imputing is large therefore rationale is indispensable.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
@@ -119,36 +142,3 @@ mtext("Number of steps", side = 2, outer = TRUE, cex = 1.0, line = 2.2, col = "g
 dev.copy(png, filename="figure/PA1_template.png", width=480, height=480)
 dev.off()
 ```
-## Note of imputing with average
-
-I chose a very simple imputing methods of substituting NA with a average value of a day, and the mean and median did not change.
-This note is how it occurred.
-
-In this data, all NA's are all over a day.
-
-```{r searchNA}
-act %>% filter(is.na(steps)) %>% nrow
-act %>% filter(is.na(steps)) %>% select(date) %>% unique()
-288*8
-```
-
-as number of intervals of a day is (60/5) * 24 = `r (60/5) * 24`.  
-
-They are converted to 0 through
- 
-```{r daySteps}
-daySteps <- act %>% group_by(date) %>% summarize(steps=sum(steps, na.rm=T ))
-daySteps[1:10,]
-```
-
-When there is NA in steps in a day, steps are all NA throughout a day.
-When imputing, these values comes out to be a nan, so I substituted it with 0.
-The bottom line is doing the same path for both.
-
-There may be a argument to substitute nan to 0, But there might not a good one to choose.
-As number of NA days are not very much
-
-```{r numberofNA}
-daySteps %>% summarize(mean(steps==0) ) 
-```
-just excluding those NA days might be a better idea.

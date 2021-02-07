@@ -130,9 +130,56 @@ mean(is.na(act$steps))
 ## [1] 0.1311475
 ```
 
+I chose a very simple imputing methods of abandoning NA's.
+The reason described below:
+
+In this data, all NA's are all throughout the day. In other word a bunch of NA's are same date and there are no other data of the date.
+
 
 ```r
-dayAve <- act %>% group_by(date) %>% summarize(ave=mean(steps, na.rm=T ))
+act %>% filter(is.na(steps)) %>% nrow
+```
+
+```
+## [1] 2304
+```
+
+```r
+act %>% filter(is.na(steps)) %>% select(date) %>% unique()
+```
+
+```
+## # A tibble: 8 x 1
+##   date      
+##   <date>    
+## 1 2012-10-01
+## 2 2012-10-08
+## 3 2012-11-01
+## 4 2012-11-04
+## 5 2012-11-09
+## 6 2012-11-10
+## 7 2012-11-14
+## 8 2012-11-30
+```
+
+there are 8 days which sums up to 2304 NA's and 
+
+
+```r
+288*8
+```
+
+```
+## [1] 2304
+```
+
+As number of intervals of a day is (60/5) * 24 = 288, they are all same date.
+
+They are converted to 0 through
+ 
+
+```r
+daySteps <- act %>% group_by(date) %>% summarize(steps=sum(steps, na.rm=T ))
 ```
 
 ```
@@ -140,18 +187,47 @@ dayAve <- act %>% group_by(date) %>% summarize(ave=mean(steps, na.rm=T ))
 ```
 
 ```r
-# if steps are NA then mean(steps, na.rm=T) returns nan, fill it with 0
-x <- dayAve$ave %>% as.numeric %>% is.nan()
-dayAve[x,2] <- 0.0
+daySteps[1:10,]
+```
 
-acti <- tibble(act)  # duplicate  
-for (i in 1:nrow(acti)) {
-    if (is.na(acti[i,"steps"])) {
-        idx <- match(acti[i,"date"], dayAve$date)
-        acti[i,"steps"] <- dayAve[idx, "ave"]
-    }
-}
-dayStepsi <- acti %>% group_by(date) %>% summarize(steps=sum(steps, na.rm=T ))
+```
+## # A tibble: 10 x 2
+##    date       steps
+##    <date>     <dbl>
+##  1 2012-10-01     0
+##  2 2012-10-02   126
+##  3 2012-10-03 11352
+##  4 2012-10-04 12116
+##  5 2012-10-05 13294
+##  6 2012-10-06 15420
+##  7 2012-10-07 11015
+##  8 2012-10-08     0
+##  9 2012-10-09 12811
+## 10 2012-10-10  9900
+```
+
+Because all NA day contains no information and if we make NA as 0 it just increases number of zeroes.
+
+As number of NA days are not very much
+
+
+```r
+daySteps %>% summarize(mean(steps==0) ) 
+```
+
+```
+## # A tibble: 1 x 1
+##   `mean(steps == 0)`
+##                <dbl>
+## 1              0.131
+```
+Ithought just excluding those NA days is a better idea.
+
+=========================================================
+
+```r
+acti <- act %>% filter(!is.na(steps))  # just abondon NA
+dayStepsi <- acti %>% group_by(date) %>% summarize(steps=sum(steps))
 ```
 
 ```
@@ -172,7 +248,7 @@ sprintf("%6.0f", mean(dayStepsi$steps))
 ```
 
 ```
-## [1] "  9354"
+## [1] " 10766"
 ```
 
 ```r
@@ -180,12 +256,12 @@ sprintf("%6.0f", median(dayStepsi$steps))
 ```
 
 ```
-## [1] " 10395"
+## [1] " 10765"
 ```
 respectively.
 
-There seems to be no difference before and after imputing.   
-The effect of imputing is not large.
+Mean and median shifts to higher significantly after imputing.   
+The effect of imputing is large therefore rationale is indispensable.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
@@ -265,97 +341,3 @@ dev.off()
 ## png 
 ##   2
 ```
-## Note of imputing with average
-
-I chose a very simple imputing methods of substituting NA with a average value of a day, and the mean and median did not change.
-This note is how it occurred.
-
-In this data, all NA's are all over a day.
-
-
-```r
-act %>% filter(is.na(steps)) %>% nrow
-```
-
-```
-## [1] 2304
-```
-
-```r
-act %>% filter(is.na(steps)) %>% select(date) %>% unique()
-```
-
-```
-## # A tibble: 8 x 1
-##   date      
-##   <date>    
-## 1 2012-10-01
-## 2 2012-10-08
-## 3 2012-11-01
-## 4 2012-11-04
-## 5 2012-11-09
-## 6 2012-11-10
-## 7 2012-11-14
-## 8 2012-11-30
-```
-
-```r
-288*8
-```
-
-```
-## [1] 2304
-```
-
-as number of intervals of a day is (60/5) * 24 = 288 
-
-they are converted to 0 through
- 
-
-```r
-daySteps <- act %>% group_by(date) %>% summarize(steps=sum(steps, na.rm=T ))
-```
-
-```
-## `summarise()` ungrouping output (override with `.groups` argument)
-```
-
-```r
-daySteps[1:10,]
-```
-
-```
-## # A tibble: 10 x 2
-##    date       steps
-##    <date>     <dbl>
-##  1 2012-10-01     0
-##  2 2012-10-02   126
-##  3 2012-10-03 11352
-##  4 2012-10-04 12116
-##  5 2012-10-05 13294
-##  6 2012-10-06 15420
-##  7 2012-10-07 11015
-##  8 2012-10-08     0
-##  9 2012-10-09 12811
-## 10 2012-10-10  9900
-```
-
-When there is NA in steps in a day, steps are all NA throughout a day.
-When imputing, these values comes out to be a nan, so I substited it with 0.
-The bottom line is doing the same path for both.
-
-There may be a argument to substitute nan to 0, But there might not a good one to choose.
-As number of NA days are not very much
-
-
-```r
-daySteps %>% summarize(mean(steps==0) ) ## 0.131
-```
-
-```
-## # A tibble: 1 x 1
-##   `mean(steps == 0)`
-##                <dbl>
-## 1              0.131
-```
-just excluding those NA days might be a better idea.
