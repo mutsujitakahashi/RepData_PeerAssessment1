@@ -94,7 +94,8 @@ timeSteps <- act %>% group_by(interval) %>% summarize(aveSteps=mean(steps, na.rm
 ```
 
 ```r
-plot(timeSteps, type="l", xlab="time", ylab="average steps")
+plot(timeSteps, type="l", xlab="time", ylab="average steps",xaxt="n")
+axis(1, cex=1.0, at = seq(0,2500,600))
 ```
 
 ![](PA1_template_files/figure-html/timeSteps-1.png)<!-- -->
@@ -133,7 +134,7 @@ mean(is.na(act$steps))
 I chose a very simple imputing methods of abandoning NA's.
 The reason described below:
 
-In this data, all NA's are all throughout the day. In other word a bunch of NA's are same date and there are no other data of the date.
+In this data, all NA's are all throughout the day. In other word a bunch of NA's are same date and there are no other data of that date.
 
 
 ```r
@@ -175,7 +176,7 @@ there are 8 days which sums up to 2304 NA's and
 
 As number of intervals of a day is (60/5) * 24 = 288, they are all same date.
 
-They are converted to 0 through
+NA'S are converted to 0 through
  
 
 ```r
@@ -206,7 +207,7 @@ daySteps[1:10,]
 ## 10 2012-10-10  9900
 ```
 
-Because all NA day contains no information and if we make NA as 0 it just increases number of zeroes.
+Because all NA day contains no information and if we make NA as 0 it just increases number of zeroes. This can be seen from the histogram above.
 
 As number of NA days are not very much
 
@@ -221,12 +222,11 @@ daySteps %>% summarize(mean(steps==0) )
 ##                <dbl>
 ## 1              0.131
 ```
-Ithought just excluding those NA days is a better idea.
+I thought just excluding those NA days is better than substituting them by some kind of average.
 
-=========================================================
 
 ```r
-acti <- act %>% filter(!is.na(steps))  # just abondon NA
+acti <- act %>% filter(!is.na(steps))  # just abandon NA
 dayStepsi <- acti %>% group_by(date) %>% summarize(steps=sum(steps))
 ```
 
@@ -260,7 +260,7 @@ sprintf("%6.0f", median(dayStepsi$steps))
 ```
 respectively.
 
-Mean and median shifts to higher significantly after imputing.   
+Mean and median shifts higher significantly after imputing.   
 The effect of imputing is large therefore rationale is indispensable.
 
 ## Are there differences in activity patterns between weekdays and weekends?
@@ -323,21 +323,3 @@ mtext("Number of steps", side = 2, outer = TRUE, cex = 1.0, line = 2.2, col = "g
 ```
 
 ![](PA1_template_files/figure-html/steps_week-1.png)<!-- -->
-
-```r
-dev.copy(png, filename="figure/PA1_template.png", width=480, height=480)
-```
-
-```
-## png 
-##   3
-```
-
-```r
-dev.off()
-```
-
-```
-## png 
-##   2
-```
