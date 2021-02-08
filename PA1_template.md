@@ -323,3 +323,7 @@ mtext("Number of steps", side = 2, outer = TRUE, cex = 1.0, line = 2.2, col = "g
 ```
 
 ![](PA1_template_files/figure-html/steps_week-1.png)<!-- -->
+
+  I can notice some difference in patterns between weekdays and weekends.  
+There are some peak around 0830 and 1830 in weekdays and activity is middle to low between them.   
+On the other hand in weekends peek in 0830 is not so intense as weekdays and no peak around 1830.   Activities in the daytime are high to middle and dispersed. 
